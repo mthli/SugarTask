@@ -121,9 +121,9 @@ public class SugarTask {
         return getInstance().buildContext();
     }
 
-    public static final int MESSAGE_FINISH = 0x65535;
+    private static final int MESSAGE_FINISH = 0x65535;
 
-    public static final int MESSAGE_BROKEN = 0x65536;
+    private static final int MESSAGE_BROKEN = 0x65536;
 
     @WorkerThread
     public static void post(@NonNull Message message) {
