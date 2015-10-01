@@ -26,12 +26,12 @@ public class MainActivity extends Activity {
     }
 
     private void test() {
-        SugarTask.with(this) // Activity/FragmentActivity/Fragment/android.support.v4.app.Fragment
+        SugarTask.with(this) // Activity/FragmentActivity(v4)/Fragment/Fragment(v4)
                 .name("Your thread name")
                 .assign(new SugarTask.TaskDescription() {
                     @Override
                     public Object onBackground() {
-                        // WorkerThread, do what you what on background.
+                        // WorkerThread, do what you want to do on background.
 
                         // If you want to post message to MainThread for changing UI in time,
                         // just follow:
