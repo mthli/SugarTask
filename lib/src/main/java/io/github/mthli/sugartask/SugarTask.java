@@ -1,3 +1,19 @@
+/*
+ * Copyright 2015 Matthew Lee
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package io.github.mthli.sugartask;
 
 import android.annotation.TargetApi;
@@ -19,109 +35,179 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class SugarTask {
+    /*
+     * WorkerThread interface,
+     * do what you want to do on background thread by implementing this interface.
+     *
+     * 后台线程接口，
+     * 通过实现这个接口，添加你想要的功能。
+     */
     public interface TaskDescription {
         Object onBackground();
     }
 
+    /*
+     * MainThread interface,
+     * handle message from WorkerThread and update something in MainThread,
+     * such us progress.
+     *
+     * 主线程接口，
+     * 用于接收处理来自后台线程的消息，可用于更新 UI 。
+     */
     public interface MessageListener {
         void handleMessage(@NonNull Message message);
     }
 
+    /*
+     * MainThread interface,
+     * when WorkerThread finish without Exception,
+     * and context lifecycle safety,
+     * onFinish() will be called.
+     *
+     * 主线程接口，
+     * 当后台线程正常结束运行，且当前上下文环境处于安全的生命周期中，
+     * 这个接口中的方法将会被调用。
+     */
     public interface FinishListener {
         void onFinish(@Nullable Object result);
     }
 
+    /*
+     * MainThread interface,
+     * when WorkerThread end with Exception,
+     * and context lifecycle safety,
+     * onBroken() will be called.
+     *
+     * 主线程接口，
+     * 当后台线程因为异常结束运行，且当前上下文环境处于安全的生命周期中，
+     * 这个接口中的方法将会被调用。
+     */
     public interface BrokenListener {
         void onBroken(@NonNull Exception e);
     }
 
-    public class Context {
-        private Context() {}
-
-        @MainThread
-        public Register name(@NonNull String name) {
-            return new Register(name);
-        }
-    }
-
     public class Register {
-        private String name;
+        private Integer id;
 
-        private Register(@NonNull String name) {
-            this.name = name;
+        private Register(@NonNull Integer id) {
+            this.id = id;
         }
 
+        /*
+         * Must.
+         *
+         * 必须。
+         */
         @MainThread
         public SugarTask.Builder assign(@NonNull TaskDescription description) {
-            taskMap.put(name, description);
+            taskMap.put(id, description);
 
-            return new Builder(name);
+            return new Builder(id);
         }
     }
 
     public class Builder {
-        private String name;
+        private Integer id;
 
-        private Builder(@NonNull String name) {
-            this.name = name;
+        private Builder(@NonNull Integer id) {
+            this.id = id;
         }
 
+        /*
+         * Optional.
+         *
+         * 可选。
+         */
         @MainThread
         public SugarTask.Builder handle(@NonNull MessageListener listener) {
-            messageMap.put(name, listener);
+            messageMap.put(id, listener);
 
             return this;
         }
 
+        /*
+         * Optional.
+         *
+         * 可选。
+         */
         @MainThread
         public SugarTask.Builder finish(@NonNull FinishListener listener) {
-            finishMap.put(name, listener);
+            finishMap.put(id, listener);
 
             return this;
         }
 
+        /*
+         * Optional.
+         *
+         * 可选。
+         */
         @MainThread
         public SugarTask.Builder broken(@NonNull BrokenListener listener) {
-            brokenMap.put(name, listener);
+            brokenMap.put(id, listener);
 
             return this;
         }
 
+        /*
+         * Must.
+         *
+         * 必须。
+         */
         @MainThread
         public void execute() {
-            executor.execute(buildRunnable(name));
+            executor.execute(buildRunnable(id));
         }
     }
 
     private class Holder {
-        private String name;
+        private Integer id;
 
         private Object object;
 
-        private Holder(@NonNull String name, @Nullable Object object) {
-            this.name = name;
+        private Holder(@NonNull Integer id, @Nullable Object object) {
+            this.id = id;
             this.object = object;
         }
     }
 
-    public static final int MESSAGE_FINISH = 0x65534;
+    /*
+     * When you post a message from WorkerThread,
+     * your message.what should not equals MESSAGE_*.
+     *
+     * 当你在后台线程中发送消息的时候，
+     * 你的 message.what 不应该和 MESSAGE_* 相等。
+     */
+    public static final int MESSAGE_FINISH = 0x65530;
 
-    public static final int MESSAGE_BROKEN = 0x65535;
+    public static final int MESSAGE_BROKEN = 0x65531;
 
-    public static final int MESSAGE_STOP = 0x65536;
+    public static final int MESSAGE_STOP = 0x65532;
 
     public static final String TAG_HOOK = "HOOK";
 
-    private static final String NAME_ACTIVITY = "ACTIVITY";
+    private static final Integer ID_ACTIVITY = 0x65533;
 
-    private static final String NAME_FRAGMENT_ACTIVITY = "FRAGMENT_ACTIVITY";
+    private static final Integer ID_FRAGMENT_ACTIVITY = 0x65534;
 
-    private static final String NAME_FRAGMENT = "FRAGMENT";
+    private static final Integer ID_FRAGMENT = 0x65535;
 
-    private static final String NAME_SUPPORT_FRAGMENT = "SUPPORT_FRAGMENT";
+    private static final Integer ID_SUPPORT_FRAGMENT = 0x65536;
 
+    /*
+     * So how to get context lifecycle state real-time?
+     * It's easy, just add a hook fragment to Activity/FragmentActivity(v4)/Fragment/Fragment(v4) by their FragmentManager,
+     * the hook fragment will follow it's parent lifecycle,
+     * so we get state real-time :)
+     *
+     * 那么怎么样才能实时获得当前上下文环境的状态呢？
+     * 很简单，只需要通过 Activity/FragmentActivity(v4)/Fragment/Fragment(v4) 的 FragmentManager 加入一个 hook fragment ，
+     * 这个 hook fragment 的生命周期会跟随它所依附的上下文环境，
+     * 所以我们就可以通过它拿到当前上下文环境的生命周期啦。
+     */
     public static class HookFragment extends Fragment {
         protected boolean postEnable = true;
 
@@ -152,34 +238,48 @@ public class SugarTask {
         }
     }
 
+    /*
+     * SugarTask begin from this, it looks like this:
+     * SugarTask.with().assign().handle().finish().broken().execute();
+     *
+     * 链式调用从这里开始，形式看上去差不是这样的：
+     * SugarTask.with().assign().handle().finish().broken().execute();
+     */
     @MainThread
-    public static Context with(@NonNull Activity activity) {
+    public static Register with(@NonNull Activity activity) {
         getInstance().registerHookToContext(activity);
 
-        return getInstance().buildContext(activity);
+        return getInstance().buildRegister(activity);
     }
 
     @MainThread
-    public static Context with(@NonNull FragmentActivity activity) {
+    public static Register with(@NonNull FragmentActivity activity) {
         getInstance().registerHookToContext(activity);
 
-        return getInstance().buildContext(activity);
+        return getInstance().buildRegister(activity);
     }
 
     @MainThread
-    public static Context with(@NonNull Fragment fragment) {
+    public static Register with(@NonNull Fragment fragment) {
         getInstance().registerHookToContext(fragment);
 
-        return getInstance().buildContext(fragment);
+        return getInstance().buildRegister(fragment);
     }
 
     @MainThread
-    public static Context with(@NonNull android.support.v4.app.Fragment fragment) {
+    public static Register with(@NonNull android.support.v4.app.Fragment fragment) {
         getInstance().registerHookToContext(fragment);
 
-        return getInstance().buildContext(fragment);
+        return getInstance().buildRegister(fragment);
     }
 
+    /*
+     * Post message from WorkerThread to MainThread:
+     * SugarTask.post(YOUR MESSAGE);
+     *
+     * 使用这个方法，在后台线程中向主线程发送消息：
+     * SugarTask.post(YOUR MESSAGE);
+     */
     @WorkerThread
     public static void post(@NonNull Message message) {
         getInstance().handler.sendMessage(message);
@@ -193,28 +293,49 @@ public class SugarTask {
         return SugarTaskHolder.INSTANCE;
     }
 
+    /*
+     * Every thread has an unique id, so we can manage thread easily.
+     *
+     * 每个执行的线程都有一个唯一的 id ，通过这个 id 我们可以很方便地管理线程。
+     */
+    private static AtomicInteger count = new AtomicInteger(0);
+
+    /*
+     * Hold current context(Activity/FragmentActivity(v4)/Fragment/Fragment(v4),
+     * when context lifecycle stop, remember use resetHolder() to reset holder.
+     *
+     * 用于承载当前上下文环境 (Activity/FragmentActivity(v4)/Fragment/Fragment(v4) ，
+     * 当当前上下文环境的生命周期停止时，记住使用 resetHolder() 将 holder 重置。
+     */
     private Holder holder = null;
 
-    private Map<String, TaskDescription> taskMap = new HashMap<>();
+    private Map<Integer, TaskDescription> taskMap = new HashMap<>();
 
-    private Map<String, MessageListener> messageMap = new HashMap<>();
+    private Map<Integer, MessageListener> messageMap = new HashMap<>();
 
-    private Map<String, FinishListener> finishMap = new HashMap<>();
+    private Map<Integer, FinishListener> finishMap = new HashMap<>();
 
-    private Map<String, BrokenListener> brokenMap = new HashMap<>();
+    private Map<Integer, BrokenListener> brokenMap = new HashMap<>();
 
     private Executor executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 8);
 
+    /*
+     * When message.what = MESSAGE_STOP, clear all MainThread callback,
+     * so we decouple WorkerThread and MainThread, avoid OOM.
+     *
+     * 当 message.what = MESSAGE_STOP ，我们立即清除所有在主线程中的回调，
+     * 这样就做到了后台线程和主线程的解耦，有效避免 OOM 。
+     */
     private Handler handler = new Handler(Looper.getMainLooper(), new Handler.Callback() {
         @Override
         public boolean handleMessage(@NonNull Message message) {
             if (message.what == MESSAGE_FINISH && message.obj instanceof Holder) {
                 Holder result = (Holder) message.obj;
 
-                messageMap.remove(result.name);
-                brokenMap.remove(result.name);
+                messageMap.remove(result.id);
+                brokenMap.remove(result.id);
 
-                FinishListener listener = finishMap.remove(result.name);
+                FinishListener listener = finishMap.remove(result.id);
                 if (listener != null) {
                     listener.onFinish(result.object);
                 }
@@ -223,17 +344,17 @@ public class SugarTask {
             } else if (message.what == MESSAGE_BROKEN && message.obj instanceof Holder) {
                 Holder result = (Holder) message.obj;
 
-                messageMap.remove(result.name);
-                finishMap.remove(result.name);
+                messageMap.remove(result.id);
+                finishMap.remove(result.id);
 
-                BrokenListener listener = brokenMap.remove(result.name);
+                BrokenListener listener = brokenMap.remove(result.id);
                 if (listener != null) {
                     listener.onBroken((Exception) result.object);
                 }
 
                 getInstance().dispatchUnregister();
             } else if (message.what == MESSAGE_STOP) {
-                freeHolder();
+                resetHolder();
 
                 taskMap.clear();
                 messageMap.clear();
@@ -249,46 +370,46 @@ public class SugarTask {
         }
     });
 
-    private Context buildContext(@NonNull Activity activity) {
-        holder = new Holder(NAME_ACTIVITY, activity);
+    private Register buildRegister(@NonNull Activity activity) {
+        holder = new Holder(ID_ACTIVITY, activity);
 
-        return new Context();
+        return new Register(count.getAndIncrement());
     }
 
-    private Context buildContext(@NonNull FragmentActivity activity) {
-        holder = new Holder(NAME_FRAGMENT_ACTIVITY, activity);
+    private Register buildRegister(@NonNull FragmentActivity activity) {
+        holder = new Holder(ID_FRAGMENT_ACTIVITY, activity);
 
-        return new Context();
+        return new Register(count.getAndIncrement());
     }
 
-    private Context buildContext(@NonNull Fragment fragment) {
-        holder = new Holder(NAME_FRAGMENT, fragment);
+    private Register buildRegister(@NonNull Fragment fragment) {
+        holder = new Holder(ID_FRAGMENT, fragment);
 
-        return new Context();
+        return new Register(count.getAndIncrement());
     }
 
-    private Context buildContext(@NonNull android.support.v4.app.Fragment fragment) {
-        holder = new Holder(NAME_SUPPORT_FRAGMENT, fragment);
+    private Register buildRegister(@NonNull android.support.v4.app.Fragment fragment) {
+        holder = new Holder(ID_SUPPORT_FRAGMENT, fragment);
 
-        return new Context();
+        return new Register(count.getAndIncrement());
     }
 
-    private Runnable buildRunnable(@NonNull final String name) {
+    private Runnable buildRunnable(@NonNull final Integer id) {
         return new Runnable() {
             @Override
             public void run() {
                 Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
 
-                TaskDescription description = taskMap.remove(name);
+                TaskDescription description = taskMap.remove(id);
                 if (description != null) {
                     Message message = new Message();
 
                     try {
                         message.what = MESSAGE_FINISH;
-                        message.obj = new Holder(name, description.onBackground());
+                        message.obj = new Holder(id, description.onBackground());
                     } catch (Exception e) {
                         message.what = MESSAGE_BROKEN;
-                        message.obj = new Holder(name, e);
+                        message.obj = new Holder(id, e);
                     }
 
                     post(message);
@@ -343,17 +464,17 @@ public class SugarTask {
             return;
         }
 
-        if (holder.name.equals(NAME_ACTIVITY) && holder.object instanceof Activity) {
+        if (holder.id.equals(ID_ACTIVITY) && holder.object instanceof Activity) {
             unregisterHookToContext((Activity) holder.object);
-        } else if (holder.name.equals(NAME_FRAGMENT_ACTIVITY) && holder.object instanceof FragmentActivity) {
+        } else if (holder.id.equals(ID_FRAGMENT_ACTIVITY) && holder.object instanceof FragmentActivity) {
             unregisterHookToContext((FragmentActivity) holder.object);
-        } else if (holder.name.equals(NAME_FRAGMENT) && holder.object instanceof Fragment) {
+        } else if (holder.id.equals(ID_FRAGMENT) && holder.object instanceof Fragment) {
             unregisterHookToContext((Fragment) holder.object);
-        } else if (holder.name.equals(NAME_SUPPORT_FRAGMENT) && holder.object instanceof android.support.v4.app.Fragment) {
+        } else if (holder.id.equals(ID_SUPPORT_FRAGMENT) && holder.object instanceof android.support.v4.app.Fragment) {
             unregisterHookToContext((android.support.v4.app.Fragment) holder.object);
         }
 
-        freeHolder();
+        resetHolder();
     }
 
     private void unregisterHookToContext(@NonNull Activity activity) {
@@ -397,12 +518,12 @@ public class SugarTask {
         }
     }
 
-    private void freeHolder() {
+    private void resetHolder() {
         if (holder == null) {
             return;
         }
 
-        holder.name = null;
+        holder.id = 0;
         holder.object = null;
         holder = null;
     }

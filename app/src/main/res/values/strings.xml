@@ -1,9 +1,7 @@
 <resources>
 
-    <string name="app_name">SugarTask</string>
+    <string name="app_name">SugarTaskDemo</string>
 
-    <string name="action_about">About</string>
-
-    <string name="activity_main_button">Button</string>
+    <string name="fragment_main_button">Click</string>
 
 </resources>

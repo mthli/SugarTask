@@ -1,4 +1,4 @@
-package io.github.mthli.sugartask;
+package io.github.mthli.sugartaskdemo;
 
 import android.os.Bundle;
 import android.os.Message;
@@ -12,6 +12,8 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.Toast;
 
+import io.github.mthli.sugartask.SugarTask;
+
 public class MainFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -24,25 +26,24 @@ public class MainFragment extends Fragment {
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                test();
+                example();
             }
         });
     }
 
-    private void test() {
+    private void example() {
         SugarTask.with(this)
-                .name("9527")
                 .assign(new SugarTask.TaskDescription() {
                     @Override
                     public Object onBackground() {
                         try {
-                            Thread.sleep(1000);
-
                             Message message = new Message();
-                            message.what = 9527;
+                            message.obj = "begin sleep 5000ms";
                             SugarTask.post(message);
 
-                            Thread.sleep(1000);
+                            Thread.sleep(5000);
+
+                            Log.e("onBackground", "after sleep 5000s");
                         } catch (Exception e) {}
 
                         return null;
@@ -51,7 +52,7 @@ public class MainFragment extends Fragment {
                 .handle(new SugarTask.MessageListener() {
                     @Override
                     public void handleMessage(@NonNull Message message) {
-                        Log.e("message", String.valueOf(message.what));
+                        Toast.makeText(getContext(), (String) message.obj, Toast.LENGTH_SHORT).show();
                     }
                 })
                 .finish(new SugarTask.FinishListener() {
@@ -63,7 +64,7 @@ public class MainFragment extends Fragment {
                 .broken(new SugarTask.BrokenListener() {
                     @Override
                     public void onBroken(@NonNull Exception e) {
-                        e.printStackTrace();
+
                     }
                 })
                 .execute();
