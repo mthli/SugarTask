@@ -41,7 +41,7 @@ public class SugarTask {
         private Context() {}
 
         @MainThread
-        public Register tag(@NonNull String name) {
+        public Register name(@NonNull String name) {
             return new Register(name);
         }
     }

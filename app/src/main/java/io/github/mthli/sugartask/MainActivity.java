@@ -27,7 +27,7 @@ public class MainActivity extends Activity {
 
     private void test() {
         SugarTask.with(this) // Activity/FragmentActivity/Fragment/android.support.v4.app.Fragment
-                .tag("Your thread name")
+                .name("Your thread name")
                 .assign(new SugarTask.TaskDescription() {
                     @Override
                     public Object onBackground() {
