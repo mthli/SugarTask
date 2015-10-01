@@ -211,35 +211,29 @@ public class SugarTask {
             if (message.what == MESSAGE_FINISH && message.obj instanceof Holder) {
                 Holder result = (Holder) message.obj;
 
-                if (finishMap.containsKey(result.name)) {
-                    finishMap.get(result.name).onFinish(result.object);
-                    finishMap.remove(result.name);
-                }
+                messageMap.remove(result.name);
+                brokenMap.remove(result.name);
 
-                if (messageMap.containsKey(result.name)) {
-                    messageMap.remove(result.name);
+                FinishListener listener = finishMap.remove(result.name);
+                if (listener != null) {
+                    listener.onFinish(result.object);
                 }
 
                 getInstance().dispatchUnregister();
             } else if (message.what == MESSAGE_BROKEN && message.obj instanceof Holder) {
                 Holder result = (Holder) message.obj;
 
-                if (brokenMap.containsKey(result.name)) {
-                    brokenMap.get(result.name).onBroken((Exception) result.object);
-                    brokenMap.remove(result.name);
-                }
+                messageMap.remove(result.name);
+                finishMap.remove(result.name);
 
-                if (messageMap.containsKey(result.name)) {
-                    messageMap.remove(result.name);
+                BrokenListener listener = brokenMap.remove(result.name);
+                if (listener != null) {
+                    listener.onBroken((Exception) result.object);
                 }
 
                 getInstance().dispatchUnregister();
             } else if (message.what == MESSAGE_STOP) {
-                if (holder != null) {
-                    holder.name = null;
-                    holder.object = null;
-                    holder = null;
-                }
+                freeHolder();
 
                 taskMap.clear();
                 messageMap.clear();
@@ -285,12 +279,13 @@ public class SugarTask {
             public void run() {
                 Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
 
-                if (taskMap.containsKey(name)) {
+                TaskDescription description = taskMap.remove(name);
+                if (description != null) {
                     Message message = new Message();
 
                     try {
                         message.what = MESSAGE_FINISH;
-                        message.obj = new Holder(name, taskMap.get(name).onBackground());
+                        message.obj = new Holder(name, description.onBackground());
                     } catch (Exception e) {
                         message.what = MESSAGE_BROKEN;
                         message.obj = new Holder(name, e);
@@ -344,7 +339,7 @@ public class SugarTask {
     }
 
     private void dispatchUnregister() {
-        if (holder == null) {
+        if (holder == null || taskMap.size() > 0) {
             return;
         }
 
@@ -357,6 +352,8 @@ public class SugarTask {
         } else if (holder.name.equals(NAME_SUPPORT_FRAGMENT) && holder.object instanceof android.support.v4.app.Fragment) {
             unregisterHookToContext((android.support.v4.app.Fragment) holder.object);
         }
+
+        freeHolder();
     }
 
     private void unregisterHookToContext(@NonNull Activity activity) {
@@ -398,5 +395,15 @@ public class SugarTask {
             hookSupportFragment.postEnable = false;
             manager.beginTransaction().remove(hookSupportFragment).commitAllowingStateLoss();
         }
+    }
+
+    private void freeHolder() {
+        if (holder == null) {
+            return;
+        }
+
+        holder.name = null;
+        holder.object = null;
+        holder = null;
     }
 }
