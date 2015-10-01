@@ -38,6 +38,8 @@ public class SugarTask {
     }
 
     public class Context {
+        private Context() {}
+
         @MainThread
         public Register tag(@NonNull String name) {
             return new Register(name);
@@ -45,9 +47,9 @@ public class SugarTask {
     }
 
     public class Register {
-        protected String name;
+        private String name;
 
-        protected Register(@NonNull String name) {
+        private Register(@NonNull String name) {
             this.name = name;
         }
 
@@ -60,9 +62,9 @@ public class SugarTask {
     }
 
     public class Builder {
-        protected String name;
+        private String name;
 
-        protected Builder(@NonNull String name) {
+        private Builder(@NonNull String name) {
             this.name = name;
         }
 
@@ -94,11 +96,11 @@ public class SugarTask {
     }
 
     private class Holder {
-        protected String name;
+        private String name;
 
-        protected Object object;
+        private Object object;
 
-        public Holder(@NonNull String name, @Nullable Object object) {
+        private Holder(@NonNull String name, @Nullable Object object) {
             this.name = name;
             this.object = object;
         }
