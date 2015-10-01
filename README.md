@@ -12,40 +12,40 @@ __UNDER PREPARE__.
 At your MainThread(UIThread), start a background thread just like this:
 
 ```java
-    SugarTask.with(this) // Activity/FragmentActivity(v4)/Fragment/Fragment(v4)
-                .assign(new SugarTask.TaskDescription() {
-                    @Override
-                    public Object onBackground() {
-                        // Do what you want to do on background thread.
-                        // If you want to post something to MainThread,
-                        // just call SugarTask.post(YOUR_MESSAGE).
+SugarTask.with(this) // Activity/FragmentActivity(v4)/Fragment/Fragment(v4)
+        .assign(new SugarTask.TaskDescription() {
+            @Override
+            public Object onBackground() {
+                // Do what you want to do on background thread.
+                // If you want to post something to MainThread,
+                // just call SugarTask.post(YOUR_MESSAGE).
 
-                        // Return your finally result(Nullable).
-                        return null;
-                    }
-                })
-                .handle(new SugarTask.MessageListener() {
-                    @Override
-                    public void handleMessage(@NonNull Message message) {
-                        // Receive message in MainThread which sent from WorkerThread,
-                        // update your UI just in time.
-                    }
-                })
-                .finish(new SugarTask.FinishListener() {
-                    @Override
-                    public void onFinish(@Nullable Object result) {
-                        // If WorkerThread finish without Exception and lifecycle safety,
-                        // deal with your WorkerThread result at here.
-                    }
-                })
-                .broken(new SugarTask.BrokenListener() {
-                    @Override
-                    public void onBroken(@NonNull Exception e) {
-                        // If WorkerThread finish with Exception and lifecycle safety,
-                        // deal with Exception at here.
-                    }
-                })
-                .execute();
+                // Return your finally result(Nullable).
+                return null;
+            }
+        })
+        .handle(new SugarTask.MessageListener() {
+            @Override
+            public void handleMessage(@NonNull Message message) {
+                // Receive message in MainThread which sent from WorkerThread,
+                // update your UI just in time.
+            }
+        })
+        .finish(new SugarTask.FinishListener() {
+            @Override
+            public void onFinish(@Nullable Object result) {
+                // If WorkerThread finish without Exception and lifecycle safety,
+                // deal with your WorkerThread result at here.
+            }
+        })
+        .broken(new SugarTask.BrokenListener() {
+            @Override
+            public void onBroken(@NonNull Exception e) {
+                // If WorkerThread finish with Exception and lifecycle safety,
+                // deal with Exception at here.
+            }
+        })
+        .execute();
 ```
 
 Your don't need to conside about Activity/Fragment lifecycle, no matter screen rotating or some others.
