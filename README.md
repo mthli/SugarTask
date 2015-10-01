@@ -70,6 +70,10 @@ When Activity/Fragment is `onStop()`, we just cancel all MainThread callback, so
 
 Get more information from [our source code](https://github.com/mthli/SugarTask/blob/master/lib/src/main/java/io/github/mthli/sugartask/SugarTask.java "SugarTask.java").
 
+## More
+
+SugarTask is so simple that it just works good for easy task, if you need more functions, just have a look at [RxAndroid](https://github.com/ReactiveX/RxAndroid "RxAndroid").
+
 ## Thanks
 
  - [Glide](https://github.com/bumptech/glide "Glide")
