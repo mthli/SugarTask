@@ -11,7 +11,7 @@ __UNDER PREPARE__.
 
 At your MainThread(UIThread), start a background thread just like this:
 
-    ```java
+```java
     SugarTask.with(this) // Activity/FragmentActivity(v4)/Fragment/Fragment(v4)
                 .assign(new SugarTask.TaskDescription() {
                     @Override
@@ -46,7 +46,7 @@ At your MainThread(UIThread), start a background thread just like this:
                     }
                 })
                 .execute();
-    ```
+```
 
 Your don't need to conside about Activity/Fragment lifecycle, no matter screen rotating or some others.
 
