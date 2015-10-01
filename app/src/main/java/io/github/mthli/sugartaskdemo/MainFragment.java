@@ -81,6 +81,6 @@ public class MainFragment extends Fragment {
 
                     }
                 })
-                .execute();
+                .execute(); // Must. 必须。
     }
 }
