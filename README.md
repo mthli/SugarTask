@@ -11,6 +11,7 @@ __UNDER PREPARE__.
 
 At your MainThread(UIThread), start a background thread just like this:
 
+    ```java
     SugarTask.with(this) // Activity/FragmentActivity(v4)/Fragment/Fragment(v4)
                 .assign(new SugarTask.TaskDescription() {
                     @Override
@@ -33,18 +34,19 @@ At your MainThread(UIThread), start a background thread just like this:
                 .finish(new SugarTask.FinishListener() {
                     @Override
                     public void onFinish(@Nullable Object result) {
-                        // If WorkerThread finish without Exception and context lifecycle safety,
+                        // If WorkerThread finish without Exception and lifecycle safety,
                         // deal with your WorkerThread result at here.
                     }
                 })
                 .broken(new SugarTask.BrokenListener() {
                     @Override
                     public void onBroken(@NonNull Exception e) {
-                        // If WorkerThread finish with Exception and context lifecycle safety,
+                        // If WorkerThread finish with Exception and lifecycle safety,
                         // deal with Exception at here.
                     }
                 })
                 .execute();
+    ```
 
 Your don't need to conside about Activity/Fragment lifecycle, no matter screen rotating or some others.
 
