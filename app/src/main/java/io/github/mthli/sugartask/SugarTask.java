@@ -4,7 +4,6 @@ import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentManager;
-import android.content.Context;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
@@ -38,17 +37,17 @@ public class SugarTask {
         void onBroken(@NonNull Exception e);
     }
 
-    public class Register {
+    public class Context {
         @MainThread
-        public Holder tag(@NonNull String name) {
-            return new Holder(name);
+        public Register tag(@NonNull String name) {
+            return new Register(name);
         }
     }
 
-    public class Holder {
+    public class Register {
         protected String name;
 
-        protected Holder(@NonNull String name) {
+        protected Register(@NonNull String name) {
             this.name = name;
         }
 
@@ -94,12 +93,12 @@ public class SugarTask {
         }
     }
 
-    private class Result {
+    private class Holder {
         protected String name;
 
         protected Object object;
 
-        public Result(@NonNull String name, @Nullable Object object) {
+        public Holder(@NonNull String name, @Nullable Object object) {
             this.name = name;
             this.object = object;
         }
@@ -111,7 +110,15 @@ public class SugarTask {
 
     public static final int MESSAGE_STOP = 0x65536;
 
-    public static final String TAG_HOOK = "TAG_HOOK";
+    public static final String TAG_HOOK = "HOOK";
+
+    private static final String NAME_ACTIVITY = "ACTIVITY";
+
+    private static final String NAME_FRAGMENT_ACTIVITY = "FRAGMENT_ACTIVITY";
+
+    private static final String NAME_FRAGMENT = "FRAGMENT";
+
+    private static final String NAME_SUPPORT_FRAGMENT = "SUPPORT_FRAGMENT";
 
     public static class HookFragment extends Fragment {
         protected boolean postEnable = true;
@@ -144,31 +151,31 @@ public class SugarTask {
     }
 
     @MainThread
-    public static Register with(@NonNull Activity activity) {
+    public static Context with(@NonNull Activity activity) {
         getInstance().registerHookToContext(activity);
 
-        return getInstance().buildRegister();
+        return getInstance().buildContext(activity);
     }
 
     @MainThread
-    public static Register with(@NonNull FragmentActivity activity) {
+    public static Context with(@NonNull FragmentActivity activity) {
         getInstance().registerHookToContext(activity);
 
-        return getInstance().buildRegister();
+        return getInstance().buildContext(activity);
     }
 
     @MainThread
-    public static Register with(@NonNull Fragment fragment) {
+    public static Context with(@NonNull Fragment fragment) {
         getInstance().registerHookToContext(fragment);
 
-        return getInstance().buildRegister();
+        return getInstance().buildContext(fragment);
     }
 
     @MainThread
-    public static Register with(@NonNull android.support.v4.app.Fragment fragment) {
+    public static Context with(@NonNull android.support.v4.app.Fragment fragment) {
         getInstance().registerHookToContext(fragment);
 
-        return getInstance().buildRegister();
+        return getInstance().buildContext(fragment);
     }
 
     @WorkerThread
@@ -184,6 +191,8 @@ public class SugarTask {
         return SugarTaskHolder.INSTANCE;
     }
 
+    private Holder holder = null;
+
     private Map<String, TaskDescription> taskMap = new HashMap<>();
 
     private Map<String, MessageListener> messageMap = new HashMap<>();
@@ -197,8 +206,8 @@ public class SugarTask {
     private Handler handler = new Handler(Looper.getMainLooper(), new Handler.Callback() {
         @Override
         public boolean handleMessage(@NonNull Message message) {
-            if (message.what == MESSAGE_FINISH && message.obj instanceof Result) {
-                Result result = (Result) message.obj;
+            if (message.what == MESSAGE_FINISH && message.obj instanceof Holder) {
+                Holder result = (Holder) message.obj;
 
                 if (finishMap.containsKey(result.name)) {
                     finishMap.get(result.name).onFinish(result.object);
@@ -209,9 +218,9 @@ public class SugarTask {
                     messageMap.remove(result.name);
                 }
 
-                // TODO: unregisterHookToContext();
-            } else if (message.what == MESSAGE_BROKEN && message.obj instanceof Result) {
-                Result result = (Result) message.obj;
+                getInstance().dispatchUnregister();
+            } else if (message.what == MESSAGE_BROKEN && message.obj instanceof Holder) {
+                Holder result = (Holder) message.obj;
 
                 if (brokenMap.containsKey(result.name)) {
                     brokenMap.get(result.name).onBroken((Exception) result.object);
@@ -222,8 +231,14 @@ public class SugarTask {
                     messageMap.remove(result.name);
                 }
 
-                // TODO: unregisterHookToContext();
+                getInstance().dispatchUnregister();
             } else if (message.what == MESSAGE_STOP) {
+                if (holder != null) {
+                    holder.name = null;
+                    holder.object = null;
+                    holder = null;
+                }
+
                 taskMap.clear();
                 messageMap.clear();
                 finishMap.clear();
@@ -238,8 +253,28 @@ public class SugarTask {
         }
     });
 
-    private Register buildRegister() {
-        return new Register();
+    private Context buildContext(@NonNull Activity activity) {
+        holder = new Holder(NAME_ACTIVITY, activity);
+
+        return new Context();
+    }
+
+    private Context buildContext(@NonNull FragmentActivity activity) {
+        holder = new Holder(NAME_FRAGMENT_ACTIVITY, activity);
+
+        return new Context();
+    }
+
+    private Context buildContext(@NonNull Fragment fragment) {
+        holder = new Holder(NAME_FRAGMENT, fragment);
+
+        return new Context();
+    }
+
+    private Context buildContext(@NonNull android.support.v4.app.Fragment fragment) {
+        holder = new Holder(NAME_SUPPORT_FRAGMENT, fragment);
+
+        return new Context();
     }
 
     private Runnable buildRunnable(@NonNull final String name) {
@@ -253,10 +288,10 @@ public class SugarTask {
 
                     try {
                         message.what = MESSAGE_FINISH;
-                        message.obj = new Result(name, taskMap.get(name).onBackground());
+                        message.obj = new Holder(name, taskMap.get(name).onBackground());
                     } catch (Exception e) {
                         message.what = MESSAGE_BROKEN;
-                        message.obj = new Result(name, e);
+                        message.obj = new Holder(name, e);
                     }
 
                     post(message);
@@ -306,7 +341,22 @@ public class SugarTask {
         }
     }
 
-    // Maybe no useful
+    private void dispatchUnregister() {
+        if (holder == null) {
+            return;
+        }
+
+        if (holder.name.equals(NAME_ACTIVITY) && holder.object instanceof Activity) {
+            unregisterHookToContext((Activity) holder.object);
+        } else if (holder.name.equals(NAME_FRAGMENT_ACTIVITY) && holder.object instanceof FragmentActivity) {
+            unregisterHookToContext((FragmentActivity) holder.object);
+        } else if (holder.name.equals(NAME_FRAGMENT) && holder.object instanceof Fragment) {
+            unregisterHookToContext((Fragment) holder.object);
+        } else if (holder.name.equals(NAME_SUPPORT_FRAGMENT) && holder.object instanceof android.support.v4.app.Fragment) {
+            unregisterHookToContext((android.support.v4.app.Fragment) holder.object);
+        }
+    }
+
     private void unregisterHookToContext(@NonNull Activity activity) {
         FragmentManager manager = activity.getFragmentManager();
 
@@ -317,7 +367,6 @@ public class SugarTask {
         }
     }
 
-    // Maybe no useful
     private void unregisterHookToContext(@NonNull FragmentActivity activity) {
         android.support.v4.app.FragmentManager manager = activity.getSupportFragmentManager();
 
@@ -328,7 +377,6 @@ public class SugarTask {
         }
     }
 
-    // Maybe no useful
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
     private void unregisterHookToContext(@NonNull Fragment fragment) {
         FragmentManager manager = fragment.getChildFragmentManager();
@@ -340,7 +388,6 @@ public class SugarTask {
         }
     }
 
-    // Maybe no useful
     private void unregisterHookToContext(@NonNull android.support.v4.app.Fragment fragment) {
         android.support.v4.app.FragmentManager manager = fragment.getChildFragmentManager();
 
