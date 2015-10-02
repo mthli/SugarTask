@@ -14,7 +14,7 @@ At your top-level `build.gradle` file:
 ```groovy
 repositories {
     // ...
-    maven { url "https://jitpack.io" }
+    maven { url 'https://jitpack.io' }
 }
 ```
 
