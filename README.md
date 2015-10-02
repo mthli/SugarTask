@@ -12,7 +12,7 @@ __UNDER PREPARE__.
 At your MainThread(UIThread), start a background thread just like this:
 
 ```java
-SugarTask.with(this) // Activity/FragmentActivity(v4)/Fragment/Fragment(v4)
+SugarTask.with(this) // Activity|FragmentActivity(v4)|Fragment|Fragment(v4)
         .assign(new SugarTask.TaskDescription() {
             @Override
             public Object onBackground() {
@@ -59,6 +59,8 @@ __Notice__:
  - `.with()`, `.assign()`, `.execute()` is __MUST__.
 
  - `.handle()`, `.finish()`, `broken()` is __OPTION__. Every method just call once, otherwise the newer with replace the older.
+
+ - Use `SugarTask.post()` To send message from WorkerThread to MainThread just in time.
 
 ## Theory
 
