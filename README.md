@@ -5,14 +5,20 @@ Android lifecycle safety task with sugar code style.
 
 ## Gradle
 
+At your top-level `build.gradle` file:
+
     repositories {
         // ...
         maven { url "https://jitpack.io" }
     }
 
+And then at your project `build.gradle` file:
+
     dependencies {
-        compile 'com.github.mthli:SugarTask:Tag'
+        compile 'com.github.mthli:SugarTask:v0.1'
     }
+
+Done!
 
 ## Usage
 
