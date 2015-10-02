@@ -3,6 +3,8 @@ SugarTask
 
 Android lifecycle safety task with sugar code style.
 
+Support Android API 14 and UP.
+
 If you have any question or want to discuss, just open an issue. Pull request is always welcome :)
 
 ## Gradle
