@@ -9,16 +9,20 @@ If you have any question or want to discuss, just open an issue. Pull request is
 
 At your top-level `build.gradle` file:
 
-    repositories {
-        // ...
-        maven { url "https://jitpack.io" }
-    }
+```groovy
+repositories {
+    // ...
+    maven { url "https://jitpack.io" }
+}
+```
 
 And then at your project `build.gradle` file:
 
-    dependencies {
-        compile 'com.github.mthli:SugarTask:v0.1'
-    }
+```groovy
+dependencies {
+    compile 'com.github.mthli:SugarTask:v0.1'
+}
+```
 
 Done!
 
