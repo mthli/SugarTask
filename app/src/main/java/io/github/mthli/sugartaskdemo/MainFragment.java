@@ -39,7 +39,7 @@ public class MainFragment extends Fragment {
                         try {
                             // Post a message from WorkerThread to MainThread.
                             // 在后台线程中向主线程发送消息。
-                            Message message = new Message();
+                            Message message = Message.obtain();
                             message.obj = "begin sleep 5000ms";
                             SugarTask.post(message);
 

@@ -22,7 +22,7 @@ And then at your project `build.gradle` file:
 
 ```groovy
 dependencies {
-    compile 'com.github.mthli:SugarTask:v0.1'
+    compile 'com.github.mthli:SugarTask:v0.2'
 }
 ```
 
@@ -77,9 +77,9 @@ And [here is a simple example](https://github.com/mthli/SugarTask/blob/master/ap
 
 __Notice__:
 
- - `.with()`, `.assign()`, `.execute()` is __MUST__.
+ - __MUST__: `.with()`, `.assign()`, `.execute()`.
 
- - `.handle()`, `.finish()`, `broken()` is __OPTION__. Every method just call once, otherwise the newer with replace the older.
+ - __OPTION__: `.handle()`, `.finish()`, `broken()`. Every method just call once, otherwise the newer with replace the older.
 
  - Use `SugarTask.post()` To send message from WorkerThread to MainThread just in time.
 

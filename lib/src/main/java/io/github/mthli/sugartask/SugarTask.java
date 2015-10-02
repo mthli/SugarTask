@@ -309,13 +309,13 @@ public class SugarTask {
      */
     private Holder holder = null;
 
-    private Map<Integer, TaskDescription> taskMap = new HashMap<>();
+    private final Map<Integer, TaskDescription> taskMap = new HashMap<>();
 
-    private Map<Integer, MessageListener> messageMap = new HashMap<>();
+    private final Map<Integer, MessageListener> messageMap = new HashMap<>();
 
-    private Map<Integer, FinishListener> finishMap = new HashMap<>();
+    private final Map<Integer, FinishListener> finishMap = new HashMap<>();
 
-    private Map<Integer, BrokenListener> brokenMap = new HashMap<>();
+    private final Map<Integer, BrokenListener> brokenMap = new HashMap<>();
 
     private Executor executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 8);
 
@@ -400,13 +400,19 @@ public class SugarTask {
             public void run() {
                 Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
 
-                TaskDescription description = taskMap.remove(id);
-                if (description != null) {
-                    Message message = new Message();
+                /*
+                 * TODO:
+                 *
+                 * Thread safety problem.
+                 *
+                 * 线程安全问题。
+                 */
+                if (taskMap.containsKey(id)) {
+                    Message message = Message.obtain();
 
                     try {
                         message.what = MESSAGE_FINISH;
-                        message.obj = new Holder(id, description.onBackground());
+                        message.obj = new Holder(id, taskMap.get(id).onBackground());
                     } catch (Exception e) {
                         message.what = MESSAGE_BROKEN;
                         message.obj = new Holder(id, e);
