@@ -31,8 +31,8 @@ import android.support.annotation.Nullable;
 import android.support.annotation.WorkerThread;
 import android.support.v4.app.FragmentActivity;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -309,13 +309,13 @@ public class SugarTask {
      */
     private Holder holder = null;
 
-    private final Map<Integer, TaskDescription> taskMap = new HashMap<>();
+    private final Map<Integer, TaskDescription> taskMap = new ConcurrentHashMap<>();
 
-    private final Map<Integer, MessageListener> messageMap = new HashMap<>();
+    private final Map<Integer, MessageListener> messageMap = new ConcurrentHashMap<>();
 
-    private final Map<Integer, FinishListener> finishMap = new HashMap<>();
+    private final Map<Integer, FinishListener> finishMap = new ConcurrentHashMap<>();
 
-    private final Map<Integer, BrokenListener> brokenMap = new HashMap<>();
+    private final Map<Integer, BrokenListener> brokenMap = new ConcurrentHashMap<>();
 
     private Executor executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 8);
 
