@@ -309,13 +309,13 @@ public class SugarTask {
      */
     private Holder holder = null;
 
-    private final Map<Integer, TaskDescription> taskMap = new ConcurrentHashMap<>();
+    private Map<Integer, TaskDescription> taskMap = new ConcurrentHashMap<>();
 
-    private final Map<Integer, MessageListener> messageMap = new ConcurrentHashMap<>();
+    private Map<Integer, MessageListener> messageMap = new ConcurrentHashMap<>();
 
-    private final Map<Integer, FinishListener> finishMap = new ConcurrentHashMap<>();
+    private Map<Integer, FinishListener> finishMap = new ConcurrentHashMap<>();
 
-    private final Map<Integer, BrokenListener> brokenMap = new ConcurrentHashMap<>();
+    private Map<Integer, BrokenListener> brokenMap = new ConcurrentHashMap<>();
 
     private Executor executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 8);
 
@@ -332,6 +332,7 @@ public class SugarTask {
             if (message.what == MESSAGE_FINISH && message.obj instanceof Holder) {
                 Holder result = (Holder) message.obj;
 
+                taskMap.remove(result.id);
                 messageMap.remove(result.id);
                 brokenMap.remove(result.id);
 
@@ -344,6 +345,7 @@ public class SugarTask {
             } else if (message.what == MESSAGE_BROKEN && message.obj instanceof Holder) {
                 Holder result = (Holder) message.obj;
 
+                taskMap.remove(result.id);
                 messageMap.remove(result.id);
                 finishMap.remove(result.id);
 

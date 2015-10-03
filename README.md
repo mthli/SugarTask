@@ -22,7 +22,7 @@ And then at your project `build.gradle` file:
 
 ```groovy
 dependencies {
-    compile 'com.github.mthli:SugarTask:v0.3'
+    compile 'com.github.mthli:SugarTask:v0.4'
 }
 ```
 
