@@ -1,6 +1,8 @@
 SugarTask
 ===
 
+[![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-SugarTask-green.svg?style=flat)](https://android-arsenal.com/details/1/2590)
+
 Android lifecycle safety task with sugar code style.
 
 Support Android API 14 and UP.
